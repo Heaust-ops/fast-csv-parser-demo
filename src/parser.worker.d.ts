@@ -39,7 +39,7 @@ const parseChunk = (content: string) => {
 
 onmessage = (e) => {
   const file = e.data as File;
-  const CHUNK_SIZE = 1024*1024;
+  const CHUNK_SIZE = 1024*1024*50;
   let offset = 0;
   const fr = new FileReader();
   const decoder = new TextDecoder();
