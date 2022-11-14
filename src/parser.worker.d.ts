@@ -3,12 +3,11 @@ const isNumeric = (str: string) => {
   return !isNaN(str) && !isNaN(parseFloat(str));
 };
 
-onmessage = (e) => {
-  const content = e.data as string;
-  let arrayBuffer = [];
-  let stringBuffer = "";
-  let activeDelimiter = null as null | string;
+let arrayBuffer = [];
+let stringBuffer = "";
+let activeDelimiter = null as null | string;
 
+const parseChunk = (content: string) => {
   const deLimiters = [`\"`, `\'`, `"`, `'`];
   const delimit = (c: string) => {
     if (deLimiters.includes(c) && !activeDelimiter) {
@@ -36,5 +35,33 @@ onmessage = (e) => {
 
     stringBuffer += char;
   }
-  postMessage("@parser-worker-message->done");
+};
+
+onmessage = (e) => {
+  const file = e.data as File;
+  const CHUNK_SIZE = 1024*1024;
+  let offset = 0;
+  const fr = new FileReader();
+  const decoder = new TextDecoder();
+
+  const seek = (offset: number) => {
+    if (offset >= file.size) {
+      postMessage("@parser-worker-message->done");
+      return;
+    }
+    const slice = file.slice(offset, offset + CHUNK_SIZE);
+    fr.readAsArrayBuffer(slice);
+  };
+
+  fr.onload = function () {
+    const view = new Uint8Array(fr.result);
+    parseChunk(decoder.decode(view));
+    offset += CHUNK_SIZE;
+    seek(offset);
+  };
+
+  seek(offset);
+
+  /**  */
+  // return;
 };
